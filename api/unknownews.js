@@ -14,10 +14,10 @@ export default async function handler(req, res) {
     const chDesc = 'Automatycznie wygenerowany RSS z archiwum.json';
 
     const itemXml = items.map(item => {
-      const title = esc(item.title || item.titleText || item.name || '');
-      const link = esc(item.url || item.link || item.permalink || '');
-      const desc = (item.desc || item.description || item.summary || '');
-      const pub = toRfc2822(item.date || item.pubDate || item.published || '');
+        const title = esc(item.title || '');
+        const link = esc(item.url || '');
+        const desc = item.info || '';
+        const pub = toRfc2822(item.date || '');
       return `<item>
   <title>${title}</title>
   <link>${link}</link>

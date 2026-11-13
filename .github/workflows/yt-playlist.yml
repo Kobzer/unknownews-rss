@@ -1,0 +1,66 @@
+name: unknowNews → YouTube playlist
+
+on:
+  schedule:
+    # Every day at 16:00 Polish time (DST handled by GitHub).
+    - cron: '0 16 * * *'
+      timezone: 'Europe/Warsaw'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Only show what would be added'
+        type: boolean
+        default: false
+
+# No GITHUB_TOKEN permissions by default; each job gets only what it needs.
+permissions: {}
+
+concurrency:
+  group: yt-playlist
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '22'
+
+      - name: Test the link parser
+        run: node --test scripts/youtube-url.test.mjs
+
+      - name: Add new videos to the playlist
+        run: node scripts/yt-sync.mjs
+        env:
+          YT_CLIENT_ID: ${{ secrets.YT_CLIENT_ID }}
+          YT_CLIENT_SECRET: ${{ secrets.YT_CLIENT_SECRET }}
+          YT_REFRESH_TOKEN: ${{ secrets.YT_REFRESH_TOKEN }}
+          YT_PLAYLIST_ID: ${{ vars.YT_PLAYLIST_ID }}
+          START_DATE: ${{ vars.START_DATE }}
+          DRY_RUN: ${{ inputs.dry_run && '1' || '0' }}
+
+  # GitHub disables scheduled workflows in public repos after 60 days without activity.
+  # Once a month, re-enable this workflow via the API so it keeps running.
+  keepalive:
+    if: github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    permissions:
+      actions: write
+    steps:
+      - name: Re-enable the schedule (1st day of the month)
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+        run: |
+          if [ "$(date -u +%d)" != "01" ]; then echo "Not today."; exit 0; fi
+          gh api -X PUT "repos/$REPO/actions/workflows/yt-playlist.yml/enable"
+          echo "Workflow re-enabled."

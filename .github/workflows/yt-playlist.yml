@@ -2,8 +2,10 @@ name: unknowNews → YouTube playlist
 
 on:
   schedule:
-    # Every day at 16:00 Polish time (DST handled by GitHub).
-    - cron: '0 16 * * *'
+    # Polish time (DST handled by GitHub): Friday 10:00, 15:00, 20:00 and Saturday 09:00.
+    - cron: '0 10,15,20 * * 5'
+      timezone: 'Europe/Warsaw'
+    - cron: '0 9 * * 6'
       timezone: 'Europe/Warsaw'
   workflow_dispatch:
     inputs:
@@ -56,11 +58,12 @@ jobs:
     permissions:
       actions: write
     steps:
-      - name: Re-enable the schedule (1st day of the month)
+      - name: Re-enable the schedule (first Saturday of the month)
         env:
           GH_TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}
+          TZ: Europe/Warsaw
         run: |
-          if [ "$(date -u +%d)" != "01" ]; then echo "Not today."; exit 0; fi
+          if [ "$(date +%u)" != "6" ] || [ "$(date +%-d)" -gt 7 ]; then echo "Not today."; exit 0; fi
           gh api -X PUT "repos/$REPO/actions/workflows/yt-playlist.yml/enable"
           echo "Workflow re-enabled."

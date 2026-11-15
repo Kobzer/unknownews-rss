@@ -10,7 +10,11 @@
 import http from 'node:http';
 import crypto from 'node:crypto';
 import readline from 'node:readline';
-import { spawn } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
+
+// With --save-to-github the refresh token is piped straight into
+// `gh secret set YT_REFRESH_TOKEN` and never printed.
+const SAVE_TO_GITHUB = process.argv.includes('--save-to-github');
 
 const SCOPE = 'https://www.googleapis.com/auth/youtube';
 const AUTH_URL = 'https://accounts.google.com/o/oauth2/v2/auth';
@@ -154,6 +158,18 @@ async function main() {
     for (const p of playlists.items) console.log(`  ${p.id}  →  ${p.snippet.title}  (${p.status?.privacyStatus})`);
   } else {
     console.log('\nThis account has no playlists yet – create one on YouTube and copy its ID from the URL (?list=...).');
+  }
+
+  if (SAVE_TO_GITHUB) {
+    const r = spawnSync('gh', ['secret', 'set', 'YT_REFRESH_TOKEN'], {
+      input: body.refresh_token,
+      stdio: ['pipe', 'inherit', 'inherit'],
+    });
+    if (r.error || r.status !== 0) {
+      throw new Error('`gh secret set` failed – is GitHub CLI installed and logged in, and are you in the repo directory?');
+    }
+    console.log('\nYT_REFRESH_TOKEN saved to GitHub Secrets (it was not printed).');
+    return;
   }
 
   console.log('\n=== YT_REFRESH_TOKEN (paste into GitHub Secrets, do not store it anywhere else) ===');

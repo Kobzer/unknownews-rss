@@ -22,6 +22,7 @@
    node scripts/get-refresh-token.mjs
    ```
    It asks for the Client ID and secret, opens the browser and, after sign-in, prints the channel name, your playlists (with IDs) and the refresh token.
+   With GitHub CLI logged in you can skip copy-pasting: `node scripts/get-refresh-token.mjs --save-to-github` stores the token directly as the `YT_REFRESH_TOKEN` secret without printing it.
 4. **GitHub → Settings → Secrets and variables → Actions**
    - *Secrets*: `YT_CLIENT_ID`, `YT_CLIENT_SECRET`, `YT_REFRESH_TOKEN`
    - *Variables*: `YT_PLAYLIST_ID`, optionally `START_DATE` (YYYY-MM-DD, default `2026-11-13`)

@@ -1,11 +1,11 @@
 # unknownews-rss
 
 1. **RSS** – `api/unknownews.js` (Vercel) turns `https://unknow.news/archiwum.json` into an RSS feed: https://unknownews-rss.vercel.app/api/unknownews
-2. **YouTube playlist** – a GitHub Actions workflow adds YouTube videos from new unknowNews issues to a playlist every day.
+2. **YouTube playlist** – a GitHub Actions workflow adds YouTube videos from new unknowNews issues to a playlist on Fridays and Saturdays.
 
 ## YouTube playlist – how it works
 
-- `.github/workflows/yt-playlist.yml` runs automatically every day at 16:00 Polish time on GitHub's servers (or manually: **Actions → Run workflow**).
+- `.github/workflows/yt-playlist.yml` runs automatically on GitHub's servers on Fridays at 10:00, 15:00 and 20:00 and on Saturdays at 09:00 Polish time (or manually: **Actions → Run workflow**).
 - `scripts/yt-sync.mjs` fetches the archive, takes entries dated `>= START_DATE`, extracts YouTube video IDs, compares them with the playlist and adds the missing ones. It keeps no state, so re-running never creates duplicates.
 - Links to playlists and channels are skipped; only single videos are added.
 - A `MAX_INSERTS` safety limit (default 60) stops the run if a suspiciously large number of videos would be added.
@@ -41,5 +41,5 @@
 ## Troubleshooting
 
 - `invalid_grant` in the logs means the token expired or was revoked (e.g. the app was in *Testing* mode, the account password was changed, or the token was unused for 6 months). Run `get-refresh-token.mjs` again and update the secret. GitHub emails you on every failed run.
-- GitHub disables schedules in public repos after 60 days without activity. The `keepalive` job re-enables the workflow once a month; if it still gets disabled, re-enable it in the Actions tab.
+- GitHub disables schedules in public repos after 60 days without activity. The `keepalive` job re-enables the workflow on the first Saturday of each month; if it still gets disabled, re-enable it in the Actions tab.
 - Scheduled runs can start a few minutes late when GitHub is under load.
